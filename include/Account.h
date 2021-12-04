@@ -1,5 +1,5 @@
 #include<vector>
-#include<string>
+#include<map>
 using namespace std;
 
 class Account{
@@ -7,12 +7,12 @@ private:
 	int Account_id;
 	double Balance;
 	string Name;
-	vector<int> CardNumbers;
+	map<pair<int, int>> Cards;
 public:
 	Account();
 	Account(int id, stirng name, int balance);
-	Account(int id, string name, int balance, &vector<int> cardnumbers);
+	void Register_card(string, int);
 	void Deposit(double data);
 	bool Withdrawal(double data);
-	void AppendCard(int cardnumber);
-}
+	bool check_card(int);
+};
