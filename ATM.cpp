@@ -10,12 +10,19 @@ private:
 	bool Bank_type = false; // 0 : single bank, 1 : Multibank
 	bool Language_type = false; // 0 : unilingual, 1 : bilingual
 	map<int, int> admin_card;
-	Bank bank;
+	Bank* bank;
 public:
 	ATM(int serial);
 	ATM(int serial, bool bank_type, bool language_type);
-	void set_admin(int, int);
-	bool admin_check(int, int);
+	void set_admin(string, string);
+	bool admin_check(string, string);
+	void Init_step();
+	void Card_Check_step();
+	void set_transaction();
+	void Deposit();
+	void Withdrawal();
+	void Transfer();
+	void Display_transaction_history();
 	void run();
 }
 ATM::ATM(int serial){
@@ -26,11 +33,11 @@ ATM::ATM(int serial, bool bank_type, bool language_type){
 	Bank_type = bank_type;
 	Language_type = language_type;
 }
-void ATM::set_admin(int cardnumber, int passwords){
-	admin_card.insert(pair<int, int>(cardnumber, passwords));
+void ATM::set_admin(string cardnumber, string passwords){
+	admin_card.insert(pair<string, string>(cardnumber, passwords));
 	return;
 }
-void ATM::admin_check(int cardnumber, int passwords){
+void ATM::admin_check(string cardnumber, string passwords){
 	auto item = admin_card.find(cardnumber);
 	return item != admin_card.end();
 }

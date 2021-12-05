@@ -1,4 +1,5 @@
 #include<iostream>
+#include<vector>
 #include<string>
 
 //#include"ui.h"
@@ -6,87 +7,82 @@
 using namespace std;
 class UI{
 private:
-	virtual string Transaction_type;
-	virtual int Start();
-	virtual int Input_pw();
-	virtual int set_transaction();
-	virtual int Input_account_number();
-	virtual void ErrorMessage();
-	virtual double amount(int type);
+	void Start();
+	void Input_pw();
+	void set_transaction();
+	void Input_account_number();
+	void ErrorMessage();
+	void amount(int type);
+protected:
+	string Transaction_type[3];
 public:
-	virtual UI();
-	void Display(int type);
+
+	void Display(int type){
+		switch(type){
+			case 0:
+			return this->Start<int>();
+			case 1:
+			return this->Input_pw<int>();
+			
+			case 2:
+			return this->set_transaction<int>();
+
+			
+			
+		}
+	}
 };
 
-class UI_ENG() : public UI{
+class UI_ENG : public UI{
 private:
-	int Start(){
+	template<typename R>
+	R Start(){
 		cout<<"---------------------------------------"<<endl;
 		cout<<"                 WELCOME               "<<endl<<endl;
 		cout<<"To start, Please insert your debit card"<<endl;
 		cout<<"Card Number : ";
-		int data;
+		R data;
 		cin>>data;
 		return data;
 	};
-	int Input_pw(){
+	template<typename R>
+	R Input_pw(){
 		cout<<"Input Passwords : "<<endl;
-		int data;
+		R data;
 		cin>>data;
 		return data;
 	};
-	int set_transaction(){
+	template<typename R>
+	R set_transaction(){
 		cout<<"Select Transaction 1 : Deposit, 2 : Withdrawal, 3 : Transfer, 4 : Check Account,  or If you want cancel : 0"<<endl;
-		int data;
+		R data;
 		cin>>data;
 		return data;
 	};
-	int Input_account_number(){
+	template<typename R>
+	R Input_account_number(){
 		cout<<"Input account number : "<<endl;
-		int data;
+		R data;
 		cin>>data;
 		return data;
 	}
-	double amount(int type){
+	template<typename R>
+	R amount(int type){
 		cout<<"Input "<< Transaction_type[type] << " Amount : "<<endl;
-		double data;
+		R data;
 		cin>>data;
 		return data;
 	};
 public:
-	UI{
-		Transaction_type = = ["Deposit", "Withdrawal", "Transfer"];
+	UI_ENG(){
+		Transaction_type = ["Deposit", "Withdrawal", "Transfer"];
 	}
-	void Display(int type){
-		switch(type){
-			case 0:
-			this->Start();
-			break;
-			case 1:
-			this->Input_pw();
-			break;
-			case 2:
-			this->set_transaction();
-			break;
-			
-		}
-	}
-}
-
-class UI_KOR() : public UI{
-private:
-	int Start();
-	int Input_pw();
-	int set_transaction();
-	int Input_account_number();
-	double amount();
-public:
-	void Display(int type);
-}
+	
+};
 
 
 int main(){
-	UI a(0);
-	a.Default();
-	a.Print_messge("안녕하세요");
+	UI_ENG a;
+	int number = a.Display<int>(0);
+	cout<<number<<endl;
 }
