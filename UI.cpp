@@ -16,7 +16,8 @@ private:
 protected:
 	string Transaction_type[3];
 public:
-
+	void ErrorMessage(string);
+	void ErrorMessage(int);
 	void Display(int type){
 		switch(type){
 			case 0:

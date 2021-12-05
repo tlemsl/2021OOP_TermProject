@@ -44,14 +44,15 @@ public:
 
 	void Add_account(Account&);
 	Account& Search_Account(string);
-	Account& Search_Account_another_bank(string);
-
+	Account& Search_Account_linked_bank(string);
+	bool Check_card(string);
+	bool Check_card_linked_bank(string);
+	bool Check_pw(string, string);
 	void Deposit(Account&, double);
 	void Withdrawal(Account&, double);
 	friend void Link_bank(Bank&, Bank&);
 	
 };
-
 
 int main(){
 	Account account1(123, "Minjong", 100), account2(132, "Minjong", 1000);
@@ -66,10 +67,14 @@ int main(){
 	Link_bank(Shinhan, NongHyup);
 
 	try{
-		Account temp = Shinhan.Search_Account_another_bank("2222");
-		Shinhan.Withdrawal(temp,1);
-		cout<<temp.Get_account_info()<<endl;
-	}
+		
+		cout<<Shinhan.Check_card("1111")<<endl;
+		cout<<Shinhan.Check_card("2222")<<endl;
+		cout<<Shinhan.Check_card_linked_bank("2222")<<endl;
+		cout<<Shinhan.Check_pw("2222", "0514")<<endl;
+		cout<<Shinhan.Check_pw("2222", "111")<<endl;
+		cout<<Shinhan.Check_pw("1111", "0514")<<endl;
+		}
 	catch(string type){
 		cout<<type<<endl;
 	}
@@ -115,8 +120,18 @@ string Account::Get_account_info(){
 	return Log[0] + format_string(", Balance : %lf",this->Balance);
 }
 void Account::Deposit(double data){
-	this->Balance += data;
-	return;
+	double temp = Balance + data;
+	try{
+		if(temp < 0){
+			throw 2;
+		}
+		else{
+			this->Balance = temp;
+		}
+	}
+	catch(int type){
+		throw;
+	}
 }
 void Account::Withdrawal(double data){
 	try{
@@ -163,7 +178,7 @@ Account& Bank::Search_Account(string cardnumber){
 		throw;
 	}
 }
-Account& Bank::Search_Account_another_bank(string cardnumber){
+Account& Bank::Search_Account_linked_bank(string cardnumber){
 	try{
 		for(Bank& temp : Bank_list){
 			try{
@@ -193,5 +208,33 @@ void Bank::Withdrawal(Account& account, double amount){
 	}
 	catch(int type){
 		throw;
+	}
+}
+bool Bank::Check_card(string cardnumber){
+	try{
+		auto temp = Search_Account(cardnumber);
+		return true;
+	}
+	catch(string cardnumber){
+		return false;
+	}
+}
+bool Bank::Check_card_linked_bank(string cardnumber){
+	try{
+		auto temp = Search_Account_linked_bank(cardnumber);
+		return true;
+	}
+	catch(string cardnumber){
+		return false;
+	}
+}
+bool Bank::Check_pw(string cardnumber, string passwords){
+	try{
+		auto temp = Search_Account(cardnumber);
+		return temp.Check_pw(cardnumber, passwords);
+	}
+	catch(string){
+		auto temp = Search_Account_linked_bank(cardnumber);
+		return temp.Check_pw(cardnumber, passwords);
 	}
 }
