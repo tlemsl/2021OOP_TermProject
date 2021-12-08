@@ -7,7 +7,12 @@ int error(){
 		throw 0;
 	}
 	catch(int expn){
-		throw;
+		try{
+			throw 4;
+		}
+		catch(int test){
+			throw;
+		}
 	}
 }
 int main(){

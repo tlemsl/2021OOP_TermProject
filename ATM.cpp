@@ -22,11 +22,17 @@ private:
 	vector<string> Atm_log;
 	string Session_log;
 	int Session_count = 0;
-	bool Account_type1 = 1; // 1 : Primary 2 : Another
-	bool Account_type2 = 1;
+	bool Account_type1 = 0; // 0 : Primary 1 : Another
+	bool Account_type2 = 0;
+	double Deposit_fee[2] = {0.0, 500.0};
+	double Withdrawal_fee[2] = {500.0, 1000.0};
+	double Transfer_fee[3] = {1500, 2000, 2500};
 public:
 	ATM(int, Bank*);
 	ATM(int, double, Bank*, bool,  bool);
+	void Input_check(int);
+	void Input_check(string);
+	void Input_check(double);
 	void Set_admin(string, string);
 	bool Admin_card_check(string);
 	bool Admin_check(string, string);
@@ -36,12 +42,13 @@ public:
 	void Admin_mode(string);
 	void Passwords_check_step(string)
 	void Do_transaction();
-	void Deposit(Account&);
-	void Withdrawal(Account&);
-	void Transfer(Account&);
+	void Deposit(Account*);
+	void Withdrawal(Account*);
+	void Transfer();
 	void Display_transaction_history();
 	void run();
 	void End_session();
+	void Print_log();
 }
 ATM::ATM(int serial, Bank* bank){
 	Serial_id = serial;
@@ -53,6 +60,18 @@ ATM::ATM(int serial, double balance, Bank* bank,bool bank_type, bool language_ty
 	Link_bank = bank;
 	Bank_type = bank_type;
 	Language_type = language_type;
+}
+void ATM::Input_check(int input){
+	if(input == 0){return End_session();}
+	else{return;}
+}
+void ATM::Input_check(string input){
+	if(input == "0"){return End_session();}
+	else{return;}
+}
+void ATM::Input_check(double input){
+	if(input == 0.0){return End_session();}
+	else{return;}
 }
 void ATM::Set_admin(string cardnumber, string passwords){
 	Admin_cards.insert(pair<string, string>(cardnumber, passwords));
@@ -90,16 +109,17 @@ void ATM::Init_step(){
 	Card_check_step();
 	return;
 }
-void ATMCard_check_step(){
+void ATM::Card_check_step(){
 	while(1){
 		string input;
 		cin>>input;
+		Input_check(input);
 		if(Linked_bank->Check_card(input)){
-			Account_type1 = 1;
+			Account_type1 = 0;
 			return Passwords_check_step(input);
 		}
 		else if(Linked_bank->Check_card_linked_bank(input)){
-			Account_type1 = 0;
+			Account_type1 = 1;
 			return Passwords_check_step(input);
 		}
 		else{
@@ -112,10 +132,8 @@ void ATM::Passwords_check_step(string cardnumber){
 		Atm_ui.Display(1);
 		string passwords;
 		cin>>passwords;
-		if(input == "0"){
-			return End_session()
-		}
-		else if(Linked_bank->Check(cardnumber, passwords)){
+		Input_check(passwords);
+		if(Linked_bank->Check(cardnumber, passwords)){
 			return Do_transaction(account);
 		}
 		else{
@@ -125,8 +143,8 @@ void ATM::Passwords_check_step(string cardnumber){
 	}
 	void End_session();
 }
-void Do_transaction(string cardnumber){
-	Account target;
+void ATM::Do_transaction(string cardnumber){
+	Account* target;
 	if(Account_type1){
 		target = Linked_bank->Search_Account(cardnumber);
 	}
@@ -142,36 +160,193 @@ void Do_transaction(string cardnumber){
 		case "2":
 		return Withdrawal(target);
 		case "3":
-		return Transfer(target);
+		return Transfer();
 		default:
 		return End_session();
 	}
 }
-void Deposit(Account& account){
+void ATM::Deposit(Account* account){
+	int sel;
 	double check, cash;
-	Atm_ui.Display(3); // ;
-	cin>>check;
-	if(check == 0){
-		return End_session();
+	Atm_ui.Display(3); // Select Cash or Check;
+	cin>>sel;
+	Input_check(sel);
+	else if(sel == 1){
+		Atm_ui.Display(4);
+		cin>>cash;
+		Input_check(cash);
+		if(cash>Max_input_cash){
+			Atm_ui.Error_message(4);
+			return Deposit(account);
+		}
 	}
-	Atm_ui.Display(4);
-	cin>>cash;
-	if(cash == 0){
-		return End_session();
+	else if(sel == 2){
+		Atm_ui.Display(5);
+		cin>>check;
+		Input_check(check);
+		if(check>Max_input_check){
+			Atm_ui.Error_message(4);
+			return Deposit(account);
+		}
 	}
 	try{
-		if(Account_type1){
-			Link_bank->Deposit(account, check+cash);
-			Session_log = format_strint()
-			Print_log();
-		}
-		else{
-			account.Deposit(account, check+cash - 500);
-			Print_log();
-		}
+		double fee = Deposit_fee[Account_type1];
+		Linked_bank->Deposit(account, cach + check - fee);
+		Atm_cash_balance += cash;
+		Atm_check_balance += check;
+		return Print_log();
 	}
 	catch(int type){
-		Atm_ui.Error_message(type)
-		Deposit(account);
+		Atm_ui.Error_message(type);
+		return this->Deposit(account);
 	}
 }
+void ATM::Withdrawal(Account* account){
+	double amount;
+	Atm_ui.Display(4);
+	cin>>amount;
+	Input_check(amount);
+	if(amount>Atm_cash_balance){
+		Atm_ui.Error_message(5);
+		return Withdrawal(account);
+	}
+	try{
+		double fee = Withdrawal_fee[Account_type1];
+		this->Linked_bank->Withdrawal(account, cach - fee);
+		this->Atm_cash_balance-=cash;
+		return Print_log();
+	}
+	catch(int type){
+		Atm_ui.Error_message(type);
+		return this->Withdrawal(account);
+	}
+}
+
+void ATM::Transfer(){
+	int type;
+	Atm_ui.Display(6);
+	cin>>type;
+	try{
+		Input_check(type);
+		Account* account1, account2;
+		if(type == 1){
+			int account_number;
+			Atm_ui.Display(7);
+			cin>>account_number;
+			Input_check(account_number);
+			try{
+				account1 = Linked_bank->Search_Account(account_number);
+				Account_type1 = 0;
+			}
+			catch(int type){
+				try{
+					account1 = Linked_bank->Search_Account_linked_bank(account_number);
+					Account_type1 = 1;
+				}
+				catch(int typee){
+					throw;
+				}
+			}
+			Atm_ui.Display(8);
+			cin>>account_number;
+			Input_check(account_number);
+			try{
+				account2 = Linked_bank->Search_Account(account_number);
+				Account_type2 = 0;
+			}
+			catch(int type){
+				try{
+					account2 = Linked_bank->Search_Account_linked_bank(account_number);
+					Account_type2 = 1;
+				}
+				catch(int typee){
+					throw;
+				}
+			}
+			double fee = Transfer_fee[Account_type1+Account_type2];
+			Atm_ui.Display(9);
+			double amount;
+			cin>>amount;
+			try{
+				Linked_bank->Withdrawal(account1, amount - fee);
+				Linked_bank->Deposit(account2, amount - fee);
+				return Print_log();
+			}
+			catch(int type){
+				throw;
+			}
+		}
+		else if(type == 2){
+			int account_number;
+			Atm_ui.Display(8);
+			cin>>account_number;
+			Input_check(account_number);
+			try{
+				account2 = Linked_bank->Search_Account(account_number);
+				Account_type2 = 0;
+			}
+			catch(int type){
+				try{
+					account2 = Linked_bank->Search_Account_linked_bank(account_number);
+					Account_type2 = 1;
+				}
+				catch(int typee){
+					throw;
+				}
+			}
+			double fee = Transfer_fee[Account_type1+Account_type2];
+			Atm_ui.Display(9);
+			Atm_ui.Display(4);
+			double amount;
+			cin>>amount;
+			try{
+				Linked_bank->Deposit(account2, amount - fee);
+				cash+= amount;
+				return Print_log();
+			}
+			catch(int type){
+				throw;
+			}
+
+		}
+		else{return End_session();}
+	}
+	catch(int type){
+		Atm_ui.Error_message(type);
+		return this->Transfer();
+	}
+
+	
+} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

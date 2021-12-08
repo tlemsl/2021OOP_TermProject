@@ -21,13 +21,15 @@ private:
 public:
 	Account();
 	Account(int id, string name, double balance);
+	int Get_account_number();
+	string Get_account_info();
 	void Register_card(string, string);
 
 	bool Check_card(string);
 	bool Check_pw(string, string);
 	void Logging(string);
 	vector<string>& Get_log();
-	string Get_account_info();
+	
 	void Deposit(double);
 	void Withdrawal(double);
 };
@@ -43,13 +45,15 @@ public:
 	string Get_Bank_name();
 
 	void Add_account(Account&);
-	Account& Search_Account(string);
-	Account& Search_Account_linked_bank(string);
+	Account* Search_Account(string);
+	Account* Search_Account(int);
+	Account* Search_Account_linked_bank(string);
+	Account* Search_Account_linked_bank(int);
 	bool Check_card(string);
 	bool Check_card_linked_bank(string);
 	bool Check_pw(string, string);
-	void Deposit(Account&, double);
-	void Withdrawal(Account&, double);
+	void Deposit(Account*, double);
+	void Withdrawal(Account*, double);
 	friend void Link_bank(Bank&, Bank&);
 	
 };
@@ -67,7 +71,7 @@ int main(){
 	Link_bank(Shinhan, NongHyup);
 
 	try{
-		
+		cout<<Shinhan.Search_Account_linked_bank("2222")->Get_account_info()<<endl;
 		cout<<Shinhan.Check_card("1111")<<endl;
 		cout<<Shinhan.Check_card("2222")<<endl;
 		cout<<Shinhan.Check_card_linked_bank("2222")<<endl;
@@ -95,7 +99,7 @@ Account::Account(int id, string name, double balance){
 	string log = "Account Owner : " + Name + format_string(", Account Number : %d",Account_id);
 	Log.push_back(log);
 }
-
+int Account::Get_account_number(){return this->Account_id;}
 void Account::Register_card(string cardnumber, string passwords){
 	Cards.insert(pair<string, string>(cardnumber, passwords));
 	return;
@@ -166,11 +170,11 @@ Bank::Bank(string name, vector<Bank>& list){
 string Bank::Get_Bank_name(){return this->Bank_name;}
 void Bank::Add_account(Account& account){Account_list.push_back(account);}
 
-Account& Bank::Search_Account(string cardnumber){
+Account* Bank::Search_Account(string cardnumber){
 	try{
 		vector<Account>::iterator it = Account_list.begin();
 		for(; it != Account_list.end(); ++it){
-			if(it->Check_card(cardnumber)){return (*it);}
+			if(it->Check_card(cardnumber)){return &(*it);}
 		}
 		throw cardnumber;
 	}
@@ -178,7 +182,19 @@ Account& Bank::Search_Account(string cardnumber){
 		throw;
 	}
 }
-Account& Bank::Search_Account_linked_bank(string cardnumber){
+Account* Bank::Search_Account(int account_number){
+	try{
+		vector<Account>::iterator it = Account_list.begin();
+		for(; it != Account_list.end(); ++it){
+			if(it->Get_account_number() == account_number){return &(*it);}
+		}
+		throw 3;
+	}
+	catch(int type){
+		throw;
+	}
+}
+Account* Bank::Search_Account_linked_bank(string cardnumber){
 	try{
 		for(Bank& temp : Bank_list){
 			try{
@@ -194,17 +210,34 @@ Account& Bank::Search_Account_linked_bank(string cardnumber){
 		throw;
 	}
 }
-void Bank::Deposit(Account& account, double amount){
+Account* Bank::Search_Account_linked_bank(int account_number){
 	try{
-		account.Deposit(amount);
+		for(Bank& temp : Bank_list){
+			try{
+				return temp.Search_Account(account_number);
+			}
+			catch(int type){
+				continue;
+			}
+		}
+		throw 3;
+	}
+	catch(int type){
+		throw;
+	}
+
+}
+void Bank::Deposit(Account* account, double amount){
+	try{
+		account->Deposit(amount);
 	}
 	catch(int type){
 		throw;
 	}
 }
-void Bank::Withdrawal(Account& account, double amount){
+void Bank::Withdrawal(Account* account, double amount){
 	try{
-		account.Withdrawal(amount);
+		account->Withdrawal(amount);
 	}
 	catch(int type){
 		throw;
@@ -231,10 +264,10 @@ bool Bank::Check_card_linked_bank(string cardnumber){
 bool Bank::Check_pw(string cardnumber, string passwords){
 	try{
 		auto temp = Search_Account(cardnumber);
-		return temp.Check_pw(cardnumber, passwords);
+		return temp->Check_pw(cardnumber, passwords);
 	}
 	catch(string){
 		auto temp = Search_Account_linked_bank(cardnumber);
-		return temp.Check_pw(cardnumber, passwords);
+		return temp->Check_pw(cardnumber, passwords);
 	}
 }
