@@ -30,9 +30,9 @@ private:
 public:
 	ATM(int, Bank*);
 	ATM(int, double, Bank*, bool,  bool);
-	void Input_check(int);
-	void Input_check(string);
-	void Input_check(double);
+	bool Input_check(int);
+	bool Input_check(string);
+	bool Input_check(double);
 	void Set_admin(string, string);
 	bool Admin_card_check(string);
 	bool Admin_check(string, string);
@@ -40,16 +40,15 @@ public:
 	void Init_step();
 	void Card_check_step();
 	void Admin_mode(string);
-	void Passwords_check_step(string)
+	void Passwords_check_step(string);
 	void Do_transaction();
 	void Deposit(Account*);
 	void Withdrawal(Account*);
 	void Transfer();
 	void Display_transaction_history();
-	void run();
 	void End_session();
 	void Print_log();
-}
+};
 ATM::ATM(int serial, Bank* bank){
 	Serial_id = serial;
 	Link_bank = bank;
@@ -61,23 +60,20 @@ ATM::ATM(int serial, double balance, Bank* bank,bool bank_type, bool language_ty
 	Bank_type = bank_type;
 	Language_type = language_type;
 }
-void ATM::Input_check(int input){
-	if(input == 0){return End_session();}
-	else{return;}
+bool ATM::Input_check(int input){
+	return input == 0;
 }
-void ATM::Input_check(string input){
-	if(input == "0"){return End_session();}
-	else{return;}
+bool ATM::Input_check(string input){
+	return input == "0";
 }
-void ATM::Input_check(double input){
-	if(input == 0.0){return End_session();}
-	else{return;}
+bool ATM::Input_check(double input){
+	return input == 0.0;
 }
 void ATM::Set_admin(string cardnumber, string passwords){
 	Admin_cards.insert(pair<string, string>(cardnumber, passwords));
 	return;
 }
-bool Admin_card_check(string cardnumber){
+bool ATM::Admin_card_check(string cardnumber){
 	auto item = Admin_cards.find(cardnumber);
 	return item != Admin_cards.end();
 }
@@ -104,7 +100,6 @@ void ATM::Set_language(){
 	return;
 }
 void ATM::Init_step(){
-	
 	Atm_ui.Display(0);
 	Card_check_step();
 	return;
@@ -113,7 +108,7 @@ void ATM::Card_check_step(){
 	while(1){
 		string input;
 		cin>>input;
-		Input_check(input);
+		if(Input_check(input)){return End_session();}
 		if(Linked_bank->Check_card(input)){
 			Account_type1 = 0;
 			return Passwords_check_step(input);
@@ -132,7 +127,7 @@ void ATM::Passwords_check_step(string cardnumber){
 		Atm_ui.Display(1);
 		string passwords;
 		cin>>passwords;
-		Input_check(passwords);
+		if(Input_check(passwords)){return End_session();}
 		if(Linked_bank->Check(cardnumber, passwords)){
 			return Do_transaction(account);
 		}
@@ -145,7 +140,7 @@ void ATM::Passwords_check_step(string cardnumber){
 }
 void ATM::Do_transaction(string cardnumber){
 	Account* target;
-	if(Account_type1){
+	if(!Account_type1){
 		target = Linked_bank->Search_Account(cardnumber);
 	}
 	else{
@@ -189,6 +184,7 @@ void ATM::Deposit(Account* account){
 			return Deposit(account);
 		}
 	}
+	else{return End_session();}
 	try{
 		double fee = Deposit_fee[Account_type1];
 		Linked_bank->Deposit(account, cach + check - fee);
@@ -207,7 +203,7 @@ void ATM::Withdrawal(Account* account){
 	cin>>amount;
 	Input_check(amount);
 	if(amount>Atm_cash_balance){
-		Atm_ui.Error_message(5);
+		Atm_ui.Error_message(2);
 		return Withdrawal(account);
 	}
 	try{
@@ -221,7 +217,6 @@ void ATM::Withdrawal(Account* account){
 		return this->Withdrawal(account);
 	}
 }
-
 void ATM::Transfer(){
 	int type;
 	Atm_ui.Display(6);
@@ -315,19 +310,25 @@ void ATM::Transfer(){
 		Atm_ui.Error_message(type);
 		return this->Transfer();
 	}
-
-	
 } 
+void End_session(){
+	Atm_ui.Display(10);
+	return;
+}
+void Print_log(){
+	cout<<"test"<<endl;
+}
+void run(){
+	Set_language();
+	return;
+}
 
 
 
 
-
-
-
-
-
-
+int main(){
+	cout<<"test"<<endl;
+}
 
 
 
