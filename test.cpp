@@ -2,10 +2,11 @@
 #include<vector>
 #include<map>
 #include<memory>
+#include<iomanip>
+#include<fstream>
 using namespace std;
 template<typename ... Args>
-std::string format_string(const std::string& format, Args ... args)
-{
+std::string format_string(const std::string& format, Args ... args){
 	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1;
 	std::unique_ptr<char[]> buffer(new char[size]);
 	snprintf(buffer.get(), size, format.c_str(), args ...);
@@ -13,7 +14,7 @@ std::string format_string(const std::string& format, Args ... args)
 }
 class UI{
 private:
-	void (UI::*Display_functions[11])()={&UI::Input_card, &UI::Input_pw, &UI::Set_transaction, &UI::Sel_cash_check, &UI::Input_cash, &UI::Input_check, &UI::Sel_cash_check, &UI::Input_account_number_source,&UI::Input_account_number_dest, &UI::Input_transfer_amount, &UI::End_session};
+	void (UI::*Display_functions[12])()={&UI::Input_card, &UI::Input_pw, &UI::Set_transaction, &UI::Sel_cash_check, &UI::Input_cash, &UI::Input_check, &UI::Sel_account_cash, &UI::Input_account_number_source,&UI::Input_account_number_dest, &UI::Input_transfer_amount, &UI::End_session,&UI::Admin_mode};
 	void (UI::*Error_functions[5])()={&UI::Wrong_cardnumber, &UI::Wrong_passwords, &UI::Lack_of_balance, &UI::Wrong_account_number, &UI::Over_max_atm_input};
 protected:
 	string Transaction_type[3];
@@ -34,6 +35,10 @@ protected:
 	virtual void Lack_of_balance() = 0;
 	virtual void Wrong_account_number() = 0;
 	virtual void Over_max_atm_input() = 0;
+	virtual void Session_display(vector<string>&) = 0;
+	virtual void Session_history(vector<vector<string>>&) = 0;
+	virtual void Account_history(vector<string>&, vector<vector<string>>&) = 0;
+	virtual void Admin_mode()=0;
 public:
 	void Display(int type){
 		(this->*Display_functions[type])();
@@ -41,11 +46,20 @@ public:
 	void Error_message(int type){
 		(this->*Error_functions[type])();
 	}
+	void Display_session(vector<string>& log){
+		Session_display(log);
+	}
+	void Display_session_history(vector<vector<string>>& logs){
+		Session_history(logs);
+	}
+	void Display_account(vector<string>& info, vector<vector<string>>& logs){
+		Account_history(info, logs);
+	}
 };
 class UI_ENG : public UI{
 protected:
 	void End_session(){
-		cout<<"Session is end Thank you"<<endl;
+		cout<<"Session is end Thank you"<<endl<<endl<<endl<<endl<<endl;
 	}
 	void End_session_message(){
 		cout<<"If you want end this session press 0"<<endl;
@@ -92,6 +106,10 @@ protected:
 		End_session_message();
 		cout<<"Input Transfer Amount : "<<endl;
 	}
+	void Admin_mode(){
+		End_session_message();
+		cout<<"WELCOME Admin if you want check Transaction History please Input 1"<<endl;
+	}
 	void Wrong_cardnumber(){
 		cout<<"Input Wrong cardnumber"<<endl;
 	}
@@ -107,71 +125,31 @@ protected:
 	void Over_max_atm_input(){
 		cout<<"Over Max ATM input"<<endl;
 	}
-};
-class UI_KOR : public UI{
-protected:
-	void End_session(){
-		cout<<"현재 세션이 종료되었습니다. 감사합니다."<<endl;
+	void Session_display(vector<string>& log){
+		cout<<setw(10)<<"User name"<<setw(17)<<"Transaction type"<<setw(15)<<"Amount"<<setw(17)<<"Source Account"<<setw(20)<<"Destinaion Account"<<setw(15)<<"fee"<<endl;
+		cout<<setw(10)<<log[0]<<setw(17)<<log[1]<<setw(15)<<log[2]<<setw(17)<<log[3]<<setw(20)<<log[4]<<setw(15)<<log[5]<<endl;
 	}
-	void End_session_message(){
-		cout<<"세션을 끝내고 싶으시면 0을 누르십시오"<<endl;
+	void Session_history(vector<vector<string>>& logs){
+		ofstream ofs("Transaction_history.csv");
+		ofs<<"id,User name,Transaction type,Amount,Source Account,Destinaion Account,fee"<<endl;
+		cout<<setw(3)<<"id"<<setw(10)<<"User name"<<setw(17)<<"Transaction type"<<setw(15)<<"Amount"<<setw(17)<<"Source Account"<<setw(20)<<"Destinaion Account"<<setw(15)<<"fee"<<endl;
+		int id = 0;
+		for(vector<string>& log : logs){
+			ofs<<id<<","<<log[0]<<","<<log[1]<<","<<log[2]<<","<<log[3]<<","<<log[4]<<","<<log[5]<<endl;
+			cout<<setw(3)<<id<<setw(10)<<log[0]<<setw(17)<<log[1]<<setw(15)<<log[2]<<setw(17)<<log[3]<<setw(20)<<log[4]<<setw(15)<<log[5]<<endl;
+			id++;
+		}
 	}
-	void Input_card(){
-		cout<<"---------------------------------------"<<endl;
-		cout<<"                 반갑습니다              "<<endl<<endl;
-		cout<<"시작하시려면 카드를 입력해 주세요"<<endl;
-		cout<<"카드 번호 : ";
-	};
-	void Input_pw(){
-		End_session_message();
-		cout<<"비밀 번호 : "<<endl;
-	};
-	void Set_transaction(){
-		End_session_message();
-		cout<<"Select Transaction 1 : Deposit, 2 : Withdrawal, 3 : Transfer, 4 : Check Account "<<endl;
-	};
-	void Sel_cash_check(){
-		End_session_message();
-		cout<<"Select Deposit type, 1 : Cash, 2 : Check "<<endl;
-	}
-	void Input_cash(){
-		End_session_message();
-		cout<<"Input Cash : "<<endl;
-	};
-	void Input_check(){
-		End_session_message();
-		cout<<"Input Check : "<<endl;
-	}
-	void Sel_account_cash(){
-		End_session_message();
-		cout<<"Select Transfer Type, Account : 1, Cash : 2"<<endl;
-	}
-	void Input_account_number_source(){
-		End_session_message();
-		cout<<"Input Source Account Number : "<<endl;
-	}
-	void Input_account_number_dest(){
-		End_session_message();
-		cout<<"Input Destination Account Number : "<< endl;
-	}
-	void Input_transfer_amount(){
-		End_session_message();
-		cout<<"Input Transfer Amount : "<<endl;
-	}
-	void Wrong_cardnumber(){
-		cout<<"Input Wrong cardnumber"<<endl;
-	}
-	void Wrong_passwords(){
-		cout<<"Input Wrong passwords"<<endl;
-	}
-	void Lack_of_balance(){
-		cout<<"Lack_of_balance error"<<endl;
-	}
-	void Wrong_account_number(){
-		cout<<"Input Wrong Account number"<<endl;
-	}
-	void Over_max_atm_input(){
-		cout<<"Over Max ATM input"<<endl;
+	void Account_history(vector<string>& info, vector<vector<string>>& logs){
+		cout<<setw(10)<<"Name"<<setw(15)<<"Account Number"<<setw(15)<<"Balance"<<endl;
+		cout<<setw(10)<<info[0]<<setw(15)<<info[1]<<setw(15)<<info[2]<<endl;
+		cout<<"Transaction History"<<endl;
+		cout<<setw(3)<<"id"<<setw(15)<<"Deposit"<<setw(15)<<"Withdrawal"<<setw(15)<<"Balance"<<endl;
+		int id = 0;
+		for(vector<string>& log : logs){
+			cout<<setw(3)<<id<<setw(15)<<log[0]<<setw(15)<<log[1]<<setw(15)<<log[2]<<endl;
+			id++;
+		}
 	}
 };
 class Account{
@@ -180,18 +158,21 @@ private:
 	double Balance;
 	string Name;
 	map<string, string> Cards;
-	vector<string> Log;
+	vector<string> Temp_log;
+	vector<vector<string>> Account_log;
 public:
 	Account();
 	Account(int id, string name, double balance);
+	string Get_account_name();
+	double Get_account_balance();
 	int Get_account_number();
-	string Get_account_info();
+	vector<string>& Get_account_info();
+	vector<vector<string>>& Get_account_log();
 	void Register_card(string, string);
 
 	bool Check_card(string);
 	bool Check_pw(string, string);
-	void Logging(string);
-	vector<string>& Get_log();
+	
 	
 	void Deposit(double);
 	void Withdrawal(double);
@@ -217,6 +198,8 @@ public:
 	bool Check_pw(string, string);
 	void Deposit(Account*, double);
 	void Withdrawal(Account*, double);
+	vector<vector<string>>& Get_account_log(Account*);
+	vector<string>& Get_account_info(Account*);
 	friend void Link_bank(Bank&, Bank&);
 	
 };
@@ -235,8 +218,8 @@ private:
 
 	Bank* Linked_bank;
 	UI* Atm_ui;
-	vector<string> Atm_log;
-	string Session_log;
+	vector<vector<string>> Atm_log;
+	vector<string> Session_log = vector<string>(6);
 	int Session_count = 0;
 	bool Account_type1 = 0; // 0 : Primary 1 : Another
 	bool Account_type2 = 0;
@@ -261,6 +244,7 @@ public:
 	void Deposit(Account*);
 	void Withdrawal(Account*);
 	void Transfer();
+	void Check_account(Account*);
 	void Display_transaction_history();
 	void End_session();
 	void Print_log();
@@ -299,6 +283,23 @@ bool ATM::Admin_check(string cardnumber, string passwords){
 	auto item = Admin_cards.find(cardnumber);
 	return passwords == item->second;
 }
+void ATM::Admin_mode(string cardnumber){
+	string passwords;
+	Atm_ui->Display(1);
+	cin>>passwords;
+	if(Input_check(passwords)){return End_session();}
+	if(Admin_check(cardnumber, passwords)){
+		Atm_ui->Display(11);
+		int check;
+		cin>>check;
+		if(Input_check(check)){return End_session();}
+		if(check){
+			Atm_ui->Display_session_history(Atm_log);
+			End_session();
+		}
+	}
+	else{return Admin_mode(cardnumber);}
+}
 void ATM::Set_language(){
 	if(Language_type){
 		cout<<"Select Language 1 : English, 2: Korean, 언어를 선택하세요 1 : 영어, 2 : 한국어"<<endl;;
@@ -326,7 +327,8 @@ void ATM::Card_check_step(){
 	string input;
 	cin>>input;
 	if(Input_check(input)){return End_session();}
-	if(Linked_bank->Check_card(input)){
+	if(Admin_card_check(input)){return Admin_mode(input);}
+	else if(Linked_bank->Check_card(input)){
 		Account_type1 = 0;
 		return Passwords_check_step(input);
 	}
@@ -364,6 +366,7 @@ void ATM::Do_transaction(string cardnumber){
 	else{
 		target = Linked_bank->Search_Account_linked_bank(cardnumber);
 	}
+	Session_log[0] = target->Get_account_name();
 	Atm_ui->Display(2);
 	int mode;
 	cin>>mode;
@@ -374,6 +377,8 @@ void ATM::Do_transaction(string cardnumber){
 		return Withdrawal(target);
 		case 3:
 		return Transfer();
+		case 4:
+		return Check_account(target);
 		default:
 		return End_session();
 	}
@@ -407,6 +412,11 @@ void ATM::Deposit(Account* account){
 		Linked_bank->Deposit(account, cash + check - fee);
 		Atm_cash_balance += cash;
 		Atm_check_balance += check;
+		Session_log[1] = "0";
+		Session_log[2] = to_string(cash + check);
+		Session_log[3] = "";
+		Session_log[4] = to_string(account->Get_account_number());
+		Session_log[5] = to_string(fee);
 		return Print_log();
 	}
 	catch(int type){
@@ -425,8 +435,13 @@ void ATM::Withdrawal(Account* account){
 	}
 	try{
 		double fee = Withdrawal_fee[Account_type1];
-		this->Linked_bank->Withdrawal(account, cash - fee);
+		this->Linked_bank->Withdrawal(account, cash + fee);
 		this->Atm_cash_balance-=cash;
+		Session_log[1] = "1";
+		Session_log[2] = to_string(cash);
+		Session_log[3] = to_string(account->Get_account_number());
+		Session_log[4] = "";
+		Session_log[5] = to_string(fee);
 		return Print_log();
 	}
 	catch(int type){
@@ -483,6 +498,11 @@ void ATM::Transfer(){
 			try{
 				Linked_bank->Withdrawal(account1, amount - fee);
 				Linked_bank->Deposit(account2, amount - fee);
+				Session_log[1] = "2";
+				Session_log[2] = to_string(amount);
+				Session_log[3] = to_string(account1->Get_account_number());
+				Session_log[4] = to_string(account2->Get_account_number());
+				Session_log[5] = to_string(fee);
 				return Print_log();
 			}
 			catch(int type){
@@ -515,6 +535,11 @@ void ATM::Transfer(){
 			try{
 				Linked_bank->Deposit(account2, amount - fee);
 				Atm_cash_balance += amount;
+				Session_log[1] = "2";
+				Session_log[2] = to_string(amount);
+				Session_log[3] = "";
+				Session_log[4] = to_string(account2->Get_account_number());
+				Session_log[5] = to_string(fee);
 				return Print_log();
 			}
 			catch(int type){
@@ -529,12 +554,23 @@ void ATM::Transfer(){
 		return this->Transfer();
 	}
 } 
+void ATM::Check_account(Account* account){
+	Atm_ui->Display_account(Linked_bank->Get_account_info(account), Linked_bank->Get_account_log(account));
+	return End_session();
+}
+void ATM::Display_transaction_history(){
+	Atm_ui->Display_session_history(this->Atm_log);
+}
 void ATM::End_session(){
 	Atm_ui->Display(10);
+
 	return;
 }
 void ATM::Print_log(){
-	cout<<"test"<<endl;
+	Atm_log.push_back(Session_log);
+	Atm_ui->Display_session(Session_log);
+	
+
 	End_session();
 }
 void ATM::Run(){
@@ -545,7 +581,7 @@ void ATM::Run(){
 
 
 int main(){
-	Account account1(123, "Minjong", 100), account2(132, "Minjong", 1000);
+	Account account1(123, "Minjong", 100000), account2(132, "Minjong", 100000);
 	account1.Register_card("1111", "0514");
 	account2.Register_card("2222", "0514");
 	Bank Shinhan("Shinhan");
@@ -556,6 +592,7 @@ int main(){
 	Link_bank(Shinhan, Dummy);
 	Link_bank(Shinhan, NongHyup);
 	ATM test_atm(123, 500000, &Shinhan, 1,1);
+	test_atm.Set_admin("1234","1234");
 	try{
 		/*
 		cout<<Shinhan.Search_Account_linked_bank("2222")->Get_account_info()<<endl;
@@ -566,7 +603,10 @@ int main(){
 		cout<<Shinhan.Check_pw("2222", "111")<<endl;
 		cout<<Shinhan.Check_pw("1111", "0514")<<endl;
 		*/
-		test_atm.Run();
+		while(1){
+			test_atm.Run();
+		}
+		
 		}
 	catch(string type){
 		cout<<type<<endl;
@@ -585,9 +625,10 @@ Account::Account(int id, string name, double balance){
 	Account_id = id;
 	Name = name;
 	Balance = balance;
-	string log = "Account Owner : " + Name + format_string(", Account Number : %d",Account_id);
-	Log.push_back(log);
+	
 }
+string Account::Get_account_name(){return this->Name;}
+double Account::Get_account_balance(){return this->Balance;}
 int Account::Get_account_number(){return this->Account_id;}
 void Account::Register_card(string cardnumber, string passwords){
 	Cards.insert(pair<string, string>(cardnumber, passwords));
@@ -603,14 +644,12 @@ bool Account::Check_pw(string cardnumber, string passwords){
 	return passwords == item->second;
 }
 
-void Account::Logging(string data){
-	Log.push_back(data);
+vector<string>& Account::Get_account_info(){
+	Temp_log = {this->Name, to_string(this->Account_id), to_string(this->Balance)};
+	return Temp_log;
 }
-vector<string>& Account::Get_log(){
-	return this->Log;
-}
-string Account::Get_account_info(){
-	return Log[0] + format_string(", Balance : %lf",this->Balance);
+vector<vector<string>>& Account::Get_account_log(){
+	return this->Account_log;
 }
 void Account::Deposit(double data){
 	double temp = Balance + data;
@@ -620,6 +659,8 @@ void Account::Deposit(double data){
 		}
 		else{
 			this->Balance = temp;
+			vector<string> log = {to_string(data), to_string(0.0), to_string(Balance)};
+			Account_log.push_back(log);
 		}
 	}
 	catch(int type){
@@ -634,6 +675,8 @@ void Account::Withdrawal(double data){
 		}
 		else{
 			this->Balance = temp;
+			vector<string> log = {to_string(0.0), to_string(data), to_string(Balance)};
+			Account_log.push_back(log);
 		}
 	}
 	catch(int type){
@@ -658,6 +701,8 @@ Bank::Bank(string name, vector<Bank>& list){
 }
 string Bank::Get_Bank_name(){return this->Bank_name;}
 void Bank::Add_account(Account& account){Account_list.push_back(account);}
+vector<string>& Bank::Get_account_info(Account* account){return account->Get_account_info();}
+vector<vector<string>>& Bank::Get_account_log(Account* account){return account->Get_account_log();}
 
 Account* Bank::Search_Account(string cardnumber){
 	try{
